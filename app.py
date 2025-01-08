@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import JSONResponse
 import requests
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -33,7 +34,7 @@ async def line_webhook(request: Request):
     except InvalidSignatureError:
         raise HTTPException(status_code=400, detail="Invalid signature")
 
-    return "OK"
+    return JSONResponse(content={"message": "OK"}, status_code=200)
 
 
 # LINE 訊息事件處理
