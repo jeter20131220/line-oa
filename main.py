@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import TextSendMessage
+from linebot.models import TextSendMessage,MessageEvent
 import os
 
 load_dotenv()
@@ -28,20 +28,14 @@ handler = WebhookHandler(LINE_CHANNEL_SECRET)
 async def line_webhook(request: Request):
     try:
         body = await request.json()
-        events = body.get("events", [])
-        if not events:
-            return {"message": "No events"}
+        signature = request.headers.get("X-Line-Signature", None)
+        if not signature:
+            raise HTTPException(status_code=400, detail="Missing X-Line-Signature header")
 
-        for event in events:
-            if event["type"] == "message" and event["message"]["type"] == "text":
-                user_message = event["message"]["text"]
-                reply_token = event["replyToken"]
-
-                # 呼叫 GPT API
-                gpt_response = call_gpt_api(user_message)
-
-                # 回復用戶
-                reply_to_user(reply_token, gpt_response)
+        try:
+            handler.handle(body.decode("utf-8"), signature)
+        except InvalidSignatureError:
+            raise HTTPException(status_code=400, detail="Invalid signature")
 
         return {"message": "OK"}
     except Exception as e:
@@ -49,7 +43,7 @@ async def line_webhook(request: Request):
 
 
 # LINE 訊息事件處理
-@handler.add(event="message")
+@handler.add(MessageEvent)
 def handle_message(event):
     if event.message.type == "text":
         user_message = event.message.text
