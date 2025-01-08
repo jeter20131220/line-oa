@@ -24,22 +24,17 @@ line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
 # LINE Webhook 路徑
-@app.post("/line-webhook")
-async def line_webhook(request: Request):
-    try:
+@app.post("/callback")
+async def callback(request: Request):
+        signature = request.headers.get("X-Line-Signature", "")
         body = await request.json()
-        signature = request.headers.get("X-Line-Signature", None)
-        if not signature:
-            raise HTTPException(status_code=400, detail="Missing X-Line-Signature header")
 
         try:
-            handler.handle(body.decode("utf-8"), signature)
+            handler.handle(body.decode(), signature)
         except InvalidSignatureError:
             raise HTTPException(status_code=400, detail="Invalid signature")
 
         return {"message": "OK"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
 
 # LINE 訊息事件處理
