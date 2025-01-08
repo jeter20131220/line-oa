@@ -112,6 +112,6 @@ def reply_to_user(reply_token, reply_message):
     response = requests.post("https://api.line.me/v2/bot/message/reply", headers=headers, json=data)
     if response.status_code != 200:
         print("Error replying to user:", response.text)    
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run(app, host="127.0.0.1", port=8000)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
