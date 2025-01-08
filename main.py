@@ -98,6 +98,7 @@ def call_gpt_api(user_message: str) -> str:
         return response.json()["choices"][0]["message"]["content"]
     except requests.exceptions.RequestException as e:
         return f"抱歉，目前無法回應您的訊息。錯誤：{str(e)}"
+    
 def reply_to_user(reply_token, reply_message):
     headers = {
         "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}",
