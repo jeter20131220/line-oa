@@ -3,3 +3,4 @@ openai==1.40.1
 requests==2.32.3
 uvicorn==0.24.0.post1
 python-dotenv==1.0.0
+line-bot-sdk==3.14.2
