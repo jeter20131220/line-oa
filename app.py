@@ -53,8 +53,8 @@ def handle_message(event):
             TextSendMessage(text=gpt_response)
         )
 
-@app.post("/ask")
-def call_gpt_api(user_message):
+
+def call_gpt_api(user_message: str) -> str:
     headers = {
         "Authorization": f"Bearer {OPENAI_API_KEY}",
         "Content-Type": "application/json"
