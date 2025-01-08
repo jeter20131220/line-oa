@@ -26,15 +26,26 @@ handler = WebhookHandler(LINE_CHANNEL_SECRET)
 # LINE Webhook 路徑
 @app.post("/line-webhook")
 async def line_webhook(request: Request):
-    signature = request.headers.get("X-Line-Signature", "")
-    body = await request.body()
-
     try:
-        handler.handle(body.decode("utf-8"), signature)
-    except InvalidSignatureError:
-        raise HTTPException(status_code=400, detail="Invalid signature")
+        body = await request.json()
+        events = body.get("events", [])
+        if not events:
+            return {"message": "No events"}
 
-    return JSONResponse(content={"message": "OK"}, status_code=200)
+        for event in events:
+            if event["type"] == "message" and event["message"]["type"] == "text":
+                user_message = event["message"]["text"]
+                reply_token = event["replyToken"]
+
+                # 呼叫 GPT API
+                gpt_response = call_gpt_api(user_message)
+
+                # 回復用戶
+                reply_to_user(reply_token, gpt_response)
+
+        return {"message": "OK"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # LINE 訊息事件處理
@@ -87,6 +98,19 @@ def call_gpt_api(user_message: str) -> str:
         return response.json()["choices"][0]["message"]["content"]
     except requests.exceptions.RequestException as e:
         return f"抱歉，目前無法回應您的訊息。錯誤：{str(e)}"
+def reply_to_user(reply_token, reply_message):
+    headers = {
+        "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "replyToken": reply_token,
+        "messages": [{"type": "text", "text": reply_message}]
+    }
+
+    response = requests.post("https://api.line.me/v2/bot/message/reply", headers=headers, json=data)
+    if response.status_code != 200:
+        print("Error replying to user:", response.text)    
 # if __name__ == "__main__":
 #     import uvicorn
 #     uvicorn.run(app, host="127.0.0.1", port=8000)
