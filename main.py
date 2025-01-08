@@ -9,6 +9,7 @@ from linebot.models import TextSendMessage,MessageEvent
 import os
 
 load_dotenv()
+
 app = FastAPI()
 
 
@@ -23,18 +24,43 @@ LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
+
+
 # LINE Webhook 路徑
+# @app.post("/callback")
+# async def callback(request: Request) -> str:
+#         signature = request.headers.get("X-Line-Signature", "")
+#         body = await request.json()
+
+#         try:
+#             handler.handle(body.decode(), signature)
+#         except InvalidSignatureError:
+#             raise HTTPException(status_code=400, detail="Invalid signature")
+
+#         return {"message": "OK"}
+
 @app.post("/callback")
-async def callback(request: Request):
-        signature = request.headers.get("X-Line-Signature", "")
-        body = await request.json()
+async def callback(request: Request) -> str:
+    """LINE Bot webhook callback
 
-        try:
-            handler.handle(body.decode(), signature)
-        except InvalidSignatureError:
-            raise HTTPException(status_code=400, detail="Invalid signature")
+    Args:
+        request (Request): Request Object.
 
-        return {"message": "OK"}
+    Raises:
+        HTTPException: Invalid Signature Error
+
+    Returns:
+        str: OK
+    """
+    signature = request.headers["X-Line-Signature"]
+    body = await request.body()
+    
+    # handle webhook body
+    try:
+        handler.handle(body.decode(), signature)
+    except InvalidSignatureError:
+        raise HTTPException(status_code=400, detail="Missing Parameter")
+    return "OK"
 
 
 # LINE 訊息事件處理
